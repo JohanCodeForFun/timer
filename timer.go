@@ -137,6 +137,15 @@ func main() {
 				fmt.Printf("\nPose %d/%d completed.\n", i, timer.Pose)
 				totalElapsed += time.Since(poseStart)
 			}
+
+			// Countdown before moving to the next pose
+			if i == timer.Pose { // Countdown only after completing the last pose of the current set
+				fmt.Println("Starting countdown to next pose:")
+				for j := 5; j > 0; j-- {
+					fmt.Printf("%d\n", j)
+					time.Sleep(1 * time.Second)
+				}
+			}
 		}
 		currentPoseIndex++
 	}
