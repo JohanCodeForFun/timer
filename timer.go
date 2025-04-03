@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/gob"
 	"fmt"
 	"os"
 	"strings"
@@ -13,6 +14,12 @@ type Timer struct {
 	Duration time.Duration
 }
 
+type SessionData struct {
+	DayStreak        int
+	TotalOverallTime time.Duration
+	LastRunDate      string
+}
+
 func main() {
 	// Define the sequence of poses with their respective durations
 	timers := []Timer{
@@ -20,6 +27,16 @@ func main() {
 		{Pose: 5, Duration: 1 * time.Minute},
 		{Pose: 2, Duration: 5 * time.Minute},
 		{Pose: 1, Duration: 10 * time.Minute},
+	}
+
+	// Load session data from file
+	sessionData := loadSessionData()
+
+	// Check if it's a new day
+	currentDate := time.Now().Format("2006-01-02")
+	if sessionData.LastRunDate != currentDate {
+		sessionData.DayStreak++ // New day, increment the streak
+		sessionData.LastRunDate = currentDate
 	}
 
 	totalTime := 0 * time.Minute
@@ -76,7 +93,12 @@ func main() {
 					case "q": // Quit timer
 						// Round the total time elapsed to the nearest second before quitting
 						fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed.Round(time.Second))
+						fmt.Printf("Total time spent across all sessions: %v\n", sessionData.TotalOverallTime.Round(time.Second))
+						fmt.Printf("Day streak: %d days\n", sessionData.DayStreak)
 						fmt.Println("Exiting timer.")
+						// Save session data to file
+						sessionData.TotalOverallTime += totalElapsed
+						saveSessionData(sessionData)
 						return
 					}
 				}
@@ -93,7 +115,12 @@ func main() {
 						if keyPress == "q" {
 							// Round the total time elapsed to the nearest second before quitting
 							fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed.Round(time.Second))
+							fmt.Printf("Total time spent across all sessions: %v\n", sessionData.TotalOverallTime.Round(time.Second))
+							fmt.Printf("Day streak: %d days\n", sessionData.DayStreak)
 							fmt.Println("Exiting timer.")
+							// Save session data to file
+							sessionData.TotalOverallTime += totalElapsed
+							saveSessionData(sessionData)
 							return
 						}
 					}
@@ -116,6 +143,9 @@ func main() {
 
 	// If we finish the entire sequence, print the total time
 	fmt.Printf("All poses completed. Total time elapsed: %v\n", totalElapsed.Round(time.Second))
+	// Save session data to file
+	sessionData.TotalOverallTime += totalElapsed
+	saveSessionData(sessionData)
 }
 
 // Function to check for key presses from the user
@@ -128,4 +158,44 @@ func checkKeyPress() string {
 	input, _ := reader.ReadString('\n')
 	// Return the trimmed input to avoid newlines
 	return strings.TrimSpace(input)
+}
+
+// Function to load the session data from file
+func loadSessionData() SessionData {
+	file, err := os.Open("session_data.gob")
+	if err != nil {
+		// If file does not exist, return default values
+		return SessionData{
+			DayStreak:        0,
+			TotalOverallTime: 0 * time.Second,
+			LastRunDate:      "",
+		}
+	}
+	defer file.Close()
+
+	decoder := gob.NewDecoder(file)
+	var sessionData SessionData
+	err = decoder.Decode(&sessionData)
+	if err != nil {
+		fmt.Println("Error decoding session data:", err)
+		return SessionData{}
+	}
+
+	return sessionData
+}
+
+// Function to save the session data to file
+func saveSessionData(sessionData SessionData) {
+	file, err := os.Create("session_data.gob")
+	if err != nil {
+		fmt.Println("Error saving session data:", err)
+		return
+	}
+	defer file.Close()
+
+	encoder := gob.NewEncoder(file)
+	err = encoder.Encode(sessionData)
+	if err != nil {
+		fmt.Println("Error encoding session data:", err)
+	}
 }
