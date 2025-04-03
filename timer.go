@@ -50,7 +50,7 @@ func main() {
 			for elapsed := 0 * time.Second; elapsed < timer.Duration; elapsed = time.Since(poseStart) {
 				// Print the remaining time only once per loop
 				if !movingToNext {
-					fmt.Printf("\rTime remaining: %v (Press 'p' to pause, 'r' to restart, 'n' to skip to next, 'q' to quit)", timer.Duration-elapsed)
+					fmt.Printf("\rTime remaining: %v (Press 'p' to pause, 'r' to restart, 'n' to skip to next, 'q' to quit)", timer.Duration-elapsed.Round(time.Second))
 				}
 
 				// Sleep for 1 second to update the time remaining
@@ -74,7 +74,8 @@ func main() {
 							totalElapsed += time.Since(poseStart)
 						}
 					case "q": // Quit timer
-						fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed)
+						// Round the total time elapsed to the nearest second before quitting
+						fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed.Round(time.Second))
 						fmt.Println("Exiting timer.")
 						return
 					}
@@ -90,7 +91,8 @@ func main() {
 							break
 						}
 						if keyPress == "q" {
-							fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed)
+							// Round the total time elapsed to the nearest second before quitting
+							fmt.Printf("\nTotal time elapsed: %v\n", totalElapsed.Round(time.Second))
 							fmt.Println("Exiting timer.")
 							return
 						}
@@ -113,7 +115,7 @@ func main() {
 	}
 
 	// If we finish the entire sequence, print the total time
-	fmt.Printf("All poses completed. Total time elapsed: %v\n", totalElapsed)
+	fmt.Printf("All poses completed. Total time elapsed: %v\n", totalElapsed.Round(time.Second))
 }
 
 // Function to check for key presses from the user
